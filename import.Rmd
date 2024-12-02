@@ -1,0 +1,63 @@
+---
+title: "Import data into a flat table"
+author: "Mikyas Duga"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE,
+                      message = FALSE)
+
+
+library(dplyr)
+library(purrr)
+library(readr)
+library(xml2)
+library(stringr)
+library(tidyr)
+
+source("my_functions.R")
+```
+
+## NOTES
+
+Initial import of part of IRS 2024 xml data. 
+
+```{r}
+
+
+library(furrr)
+
+# future::plan(multisession, workers = 4)
+# 
+# ## 01A
+# df_ind_comp_01A <- future_map(read_rds("data/pc_list_01A.rds"), 
+#                          ext_ind_comp, 
+#                          .progress = TRUE)
+
+# 202431589349300203_public -- PC
+# 202401459339300300_public -- 990T
+# 202401459349100020_public -- PF 
+
+
+
+test1 <- "C:/Users/mikyas.duga/OneDrive - BoardSource/IRS data/TY2022/2024_TEOS_XML_06A/202401459349100025_public.xml"
+
+
+a <- ext_ind_comp(test1)
+
+dat <- read_xml(test1)
+  
+  xml_ns_strip(dat)
+  
+  xml_text((xml_find_first(dat, "//ReturnHeader/ReturnTypeCd")))
+
+xml_text(xml_find_first(dat, "//ReturnHeader/Filer/USAddress/AddressLine1Txt"))
+
+xml_text(xml_find_all(dat, "//ReturnData/IRS990/Form990PartVIISectionAGrp/PersonNm"))
+
+```
+
