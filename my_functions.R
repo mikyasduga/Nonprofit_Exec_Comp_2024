@@ -23,9 +23,7 @@ id_pc_2 <- function(x){
   
   ret_type <- xml_text((xml_find_first(dat, "//ReturnHeader/ReturnTypeCd")))
   
-  file_loc <- paste0(wkn_dir, paste0(x), ".xml")
-  
-  cbind.data.frame(ret_type, file_loc)
+  as.data.frame(ret_type)
   
 }
 
