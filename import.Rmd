@@ -231,19 +231,156 @@ size_06A <- as_tibble(unlist(size_06A))
 which(size_06A$value > 20)
 
 
-XML_too_big <- rbind.data.frame(
-  XML_too_big,
-  filenames_06A[which(size_06A$value > 20)]
-                     )  ## add to bix XML list.
+# XML_too_big <- rbind.data.frame(
+#   XML_too_big,
+#   filenames_06A[which(size_06A$value > 20)]
+#                      )  ## add to bix XML list.
 
 
-Return_info_06A <- furrr::future_map_dfr(filenames_06A[-which(size_06A$value > 20)],
+Return_info_06A <- furrr::future_map_dfr(filenames_06A,
                                          id_pc_2, 
                                          .progress = TRUE)
 
 
-Return_info_06A$file_loc <- filenames_06A[-which(size_06A$value > 20)]
+Return_info_06A$file_loc <- filenames_06A
 saveRDS(Return_info_06A, "data/temp/return_info_06A.rds")
+
+
+## 07A
+filenames_07A <-
+  list.files(
+   paste0(wd, "/2024_TEOS_XML_07A"),
+    pattern = "*.xml",
+    full.names = TRUE
+  )
+
+
+size_07A <- furrr::future_map(filenames_07A, 
+                       get_size)
+
+size_07A <- as_tibble(unlist(size_07A))
+which(size_07A$value > 20)
+
+
+# XML_too_big <- rbind.data.frame(
+#   XML_too_big,
+#   filenames_07A[which(size_07A$value > 20)]
+#                      )  ## add to bix XML list.
+
+
+Return_info_07A <- furrr::future_map_dfr(filenames_07A,
+                                         id_pc_2, 
+                                         .progress = TRUE)
+
+
+Return_info_07A$file_loc <- filenames_07A
+saveRDS(Return_info_07A, "data/temp/return_info_07A.rds")
+
+
+
+## 08A
+filenames_08A <-
+  list.files(
+   paste0(wd, "/2024_TEOS_XML_08A"),
+    pattern = "*.xml",
+    full.names = TRUE
+  )
+
+
+size_08A <- furrr::future_map(filenames_08A, 
+                       get_size)
+
+size_08A <- as_tibble(unlist(size_08A))
+which(size_08A$value > 20)
+
+
+# XML_too_big <- rbind.data.frame(
+#   XML_too_big,
+#   filenames_08A[which(size_08A$value > 20)]
+#                      )  ## add to bix XML list.
+
+
+Return_info_08A <- furrr::future_map_dfr(filenames_08A,
+                                         id_pc_2, 
+                                         .progress = TRUE)
+
+
+Return_info_08A$file_loc <- filenames_08A
+saveRDS(Return_info_08A, "data/temp/return_info_08A.rds")
+
+
+
+## 09A
+
+filenames_09A <-
+  list.files(
+   paste0(wd, "/2024_TEOS_XML_09A"),
+    pattern = "*.xml",
+    full.names = TRUE
+  )
+
+
+size_09A <- furrr::future_map(filenames_09A, 
+                       get_size)
+
+size_09A <- as_tibble(unlist(size_09A))
+which(size_09A$value > 20)
+
+
+# XML_too_big <- rbind.data.frame(
+#   XML_too_big,
+#   filenames_09A[which(size_09A$value > 20)]
+#                      )  ## add to bix XML list.
+
+
+Return_info_09A <- furrr::future_map_dfr(filenames_09A,
+                                         id_pc_2, 
+                                         .progress = TRUE)
+
+
+Return_info_09A$file_loc <- filenames_09A
+saveRDS(Return_info_09A, "data/temp/return_info_09A.rds")
+
+
+
+## 10A
+
+filenames_10A <-
+  list.files(
+   paste0(wd, "/2024_TEOS_XML_10A"),
+    pattern = "*.xml",
+    full.names = TRUE
+  )
+
+
+size_10A <- furrr::future_map(filenames_10A, 
+                       get_size)
+
+size_10A <- as_tibble(unlist(size_10A))
+which(size_10A$value > 20)
+
+
+# XML_too_big <- rbind.data.frame(
+#   XML_too_big,
+#   filenames_10A[which(size_10A$value > 20)]
+#                      )  ## add to bix XML list.
+
+
+Return_info_10A <- furrr::future_map_dfr(filenames_10A,
+                                         id_pc_2, 
+                                         .progress = TRUE)
+
+
+Return_info_10A$file_loc <- filenames_10A
+saveRDS(Return_info_10A, "data/temp/return_info_10A.rds")
+
+
+
+
+
+
+
+
 
 
 
