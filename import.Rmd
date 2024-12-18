@@ -379,12 +379,6 @@ saveRDS(Return_info_10A, "data/temp/return_info_10A.rds")
 
 
 
-
-
-
-
-
-
 # future::plan(multisession, workers = 4)
 # 
 # ## 01A
@@ -397,21 +391,96 @@ saveRDS(Return_info_10A, "data/temp/return_info_10A.rds")
 # 202401459349100020_public -- PF 
 
 
+## 202401459349100025_public in 06A is a PF with schedule B not required. 
 
-test1 <- "C:/Users/mikyas.duga/OneDrive - BoardSource/IRS data/TY2022/2024_TEOS_XML_06A/202401459349100025_public.xml"
+
+
+test1 <- "C:/Users/mikyas.duga/OneDrive - BoardSource/IRS data/TY2022/2024_TEOS_XML_06A/202431589349300203_public.xml"
 
 
 a <- pf_ext_ind_comp(test1)
 
 dat <- read_xml(test1)
-  
+
   xml_ns_strip(dat)
-  
+
   xml_text((xml_find_first(dat, "//ReturnHeader/ReturnTypeCd")))
 
 xml_text(xml_find_first(dat, "//ReturnHeader/Filer/USAddress/AddressLine1Txt"))
 
 xml_text(xml_find_all(dat, "//ReturnData/IRS990/Form990PartVIISectionAGrp/PersonNm"))
+
+
+
+xml_text(xml_find_all(dat,
+                      
+"//ReturnData/IRS990/Organization501cInd"))
+
+
+xml_text(xml_find_all(dat,
+                      
+'//ReturnData/IRS990/Organization501cInd'))
+
+
+
+
+xml_text(xml_find_all(dat,
+                      
+"//ReturnData/IRS990PF/AnalysisOfRevenueAndExpenses/ScheduleBNotRequiredInd"))
+
+
+
+xml_text(xml_find_all(dat,
+                      
+"//ReturnData/IRS990PF/FMVAssetsEOYAmt"))
+
+
+xml_text(xml_find_all(dat,
+                      
+"//ReturnData/IRS990PF/Form990PFBalanceSheetsGrp/TotalAssetsEOYAmt"))
+
+
+
+
+
+
+
+
+```
+
+## Test functions
+```{r}
+info_04A <- read_rds("data/temp/return_info_04A.rds")
+
+set.seed(12182024)
+
+sample <- info_04A %>% 
+  filter(ret_type == "990" |
+           ret_type == "990PF") %>% 
+  slice_sample(n = 100, replace = FALSE)
+
+
+library(future)
+
+plan(multisession, workers = 4)
+
+pc_which <- which(sample$ret_type == "990")
+
+
+
+df_pc <- furrr::future_map(sample$file_loc[pc_which], ext_ind_comp)
+
+
+
+
+
+
+
+
+
+
+
+
 
 ```
 

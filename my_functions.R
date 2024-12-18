@@ -107,6 +107,20 @@ voi_IRS_xml <- function(x){
 
 
 
+empty_to_null <- function(x){ ## some can be empty and this affects cbind. so set this values to NA. 
+  
+  if (is.character(x) & length(x) == 0){
+    x <- NA
+  }
+  
+  return(x)
+}
+
+
+
+
+
+
 ## Extract individual compensation data from xml files. 
 ## one to many data frame as an org reports compensation for many employees. 
 ext_ind_comp <- function(x){
@@ -146,6 +160,47 @@ ext_ind_comp <- function(x){
   
   
   tax_yr <- cbind(return_type, yr, yr_begin, yr_end)
+  
+  
+  ## New addition
+  # any type of 501c
+  ind_501c <- xml_text(xml_find_all(dat,
+                                    '//ReturnData/IRS990/Organization501cInd'))
+  ind_501c <- empty_to_null(ind_501c)
+  
+  # type of 501c. list available on IRS website
+  type_501c <- xml_attrs(xml_child(xml_child(xml_child(dat, "ReturnData"),
+                                             "IRS990"), "Organization501cInd"))
+  
+  
+  type_501c <- empty_to_null(type_501c)
+  
+  # association indicator 
+  assoc_ind <- xml_text(xml_find_all(dat,
+                                     '//ReturnData/IRS990/TypeofOrganizationAssocInd'))
+  
+  assoc_ind <- empty_to_null(assoc_ind)
+  
+  
+  
+  
+  ## expenses current year
+  CY_expenses <- xml_double(xml_find_all(dat,
+                                       '//ReturnData/IRS990/CYTotalExpensesAmt'))
+  CY_expenses <- empty_to_null(CY_expenses)
+  
+  ## EOY total assets
+  assets_eoy <- xml_double(xml_find_all(dat,
+                                      '//ReturnData/IRS990/TotalAssetsEOYAmt'))
+  
+  assets_eoy <- empty_to_null(assets_eoy)
+  
+  org_info <- cbind(ind_501c, type_501c, assoc_ind, 
+                    CY_expenses, assets_eoy)
+  
+  
+  ## end new addition
+  
   
   vars <- cbind(  ## id_vars. address, 
     #Number address
@@ -210,19 +265,24 @@ ext_ind_comp <- function(x){
   length(other_comp) <- max_length
   
   
+ # all_cols <- empty_to_null(all_cols)
+  
  
-  df <- cbind.data.frame(id, tax_yr, vars, names, titles, avg_hrs, avg_hrs_rltd, Trustee_dir_ind, 
+  df <- cbind.data.frame(id, tax_yr, org_info,
+                         vars, names, titles, avg_hrs, 
+                         avg_hrs_rltd, Trustee_dir_ind, 
                    rep_comp, rep_comp_rltd, other_comp)
   
   
-  names(df)[1:15] <- c("EIN", "Org_name", "Return_type",
+  names(df)[1:20] <- c("EIN", "Org_name", "Return_type",
                        "Tax_yr", "Tax_yr_begin",
                        "Tax_yr_end",
+                       "ind_501c", "type_501c", "assoc_ind", 
+                       "CY_expenses", "assets_eoy",
                       "Street_add", 
-                      "city", "state", "zip_code", 
-                      id_vars2)
+                      "city", "state", "zip_code", id_vars2)
   
-  df
+  df 
   
   
 }
@@ -300,6 +360,20 @@ pf_ext_ind_comp <- function(x){
   
   tax_yr <- cbind(return_type, yr, yr_begin, yr_end)
   
+  
+  ### new additions
+  
+  ind_501c3 <- xml_text( xml_find_first(dat, "//ReturnHeader/Organization501c3ExemptPFInd"))
+  
+  assets_eoy <- xml_text( xml_find_first(dat, "//ReturnHeader/FMVAssetsEOYAmt"))
+  
+  
+  ## end new additions
+  
+  
+  
+  
+  
   vars <- cbind(  ## id_vars. address, 
     #Number address
     xml_text(xml_find_first(dat, "//ReturnHeader/Filer/USAddress/AddressLine1Txt")),
@@ -361,8 +435,10 @@ pf_ext_ind_comp <- function(x){
   
   
   
-  df <- cbind.data.frame(id, tax_yr, vars, names, titles, avg_hrs, rep_comp,
-                         ben_program_amt, other_allwnc_amt)
+  df <- cbind.data.frame(id, tax_yr, vars,
+                         names, titles, avg_hrs, rep_comp,
+                         ben_program_amt, other_allwnc_amt, 
+                         ind_501c3, assets_eoy)
   
   
   names(df)[1:15] <- c("EIN", "Org_name", "Return_type",
