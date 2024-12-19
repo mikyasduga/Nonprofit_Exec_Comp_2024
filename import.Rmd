@@ -460,23 +460,27 @@ sample <- info_04A %>%
   slice_sample(n = 100, replace = FALSE)
 
 
+pc_which <- which(sample$ret_type == "990")
+
+pf_which <- which(sample$ret_type == "990PF")
+
+
 library(future)
 
 plan(multisession, workers = 4)
 
-pc_which <- which(sample$ret_type == "990")
-
-
-
 df_pc <- furrr::future_map(sample$file_loc[pc_which], ext_ind_comp)
 
 
+df_pf <- furrr::future_map(sample$file_loc[pf_which], 
+                           pf_ext_ind_comp)
 
 
+df_pc <- bind_rows(df_pc)
 
+df_pf <- bind_rows(df_pf)
 
-
-
+## looks ready . 
 
 
 

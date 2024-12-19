@@ -195,8 +195,15 @@ ext_ind_comp <- function(x){
   
   assets_eoy <- empty_to_null(assets_eoy)
   
+  
+  total_employee_cnt <- xml_text(xml_find_all(dat, 
+                                                "//ReturnData/IRS990/TotalEmployeeCnt"))
+  
+  total_employee_cnt <- empty_to_null(total_employee_cnt)
+  
+  
   org_info <- cbind(ind_501c, type_501c, assoc_ind, 
-                    CY_expenses, assets_eoy)
+                    CY_expenses, assets_eoy, total_employee_cnt)
   
   
   ## end new addition
@@ -274,11 +281,11 @@ ext_ind_comp <- function(x){
                    rep_comp, rep_comp_rltd, other_comp)
   
   
-  names(df)[1:20] <- c("EIN", "Org_name", "Return_type",
+  names(df)[1:21] <- c("EIN", "Org_name", "Return_type",
                        "Tax_yr", "Tax_yr_begin",
                        "Tax_yr_end",
                        "ind_501c", "type_501c", "assoc_ind", 
-                       "CY_expenses", "assets_eoy",
+                       "CY_expenses", "assets_eoy", "total_employee_cnt",
                       "Street_add", 
                       "city", "state", "zip_code", id_vars2)
   
