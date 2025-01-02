@@ -370,9 +370,9 @@ pf_ext_ind_comp <- function(x){
   
   ### new additions
   
-  ind_501c3 <- xml_text( xml_find_first(dat, "//ReturnHeader/Organization501c3ExemptPFInd"))
+  ind_501c3 <- xml_text( xml_find_first(dat, "//ReturnData/IRS990PF/Organization501c3ExemptPFInd"))
   
-  assets_eoy <- xml_text( xml_find_first(dat, "//ReturnHeader/FMVAssetsEOYAmt"))
+  assets_eoy <- xml_text( xml_find_first(dat, "//ReturnData/IRS990PF/FMVAssetsEOYAmt"))
   
   
   ## end new additions
@@ -392,7 +392,7 @@ pf_ext_ind_comp <- function(x){
     xml_text(xml_find_first(dat, paste0("//ReturnHeader/Filer/USAddress/ZIPCd"))),
     
     
-    xml_text(xml_find_first(dat, paste0("//ReturnData/IRS990/", id_vars2[1]))),
+    xml_text(xml_find_first(dat, paste0("//ReturnData/IRS990/", id_vars2[1]))),  ## the next 5 items are not available for PFs. 
     
     xml_text(xml_find_first(dat, paste0("//ReturnData/IRS990/", id_vars2[2]))),
     

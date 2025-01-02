@@ -398,6 +398,9 @@ saveRDS(Return_info_10A, "data/temp/return_info_10A.rds")
 test1 <- "C:/Users/mikyas.duga/OneDrive - BoardSource/IRS data/TY2022/2024_TEOS_XML_06A/202431589349300203_public.xml"
 
 
+test1 <- sample$file_loc[pf_which[12]]
+
+
 a <- pf_ext_ind_comp(test1)
 
 dat <- read_xml(test1)
@@ -449,7 +452,7 @@ xml_text(xml_find_all(dat,
 ```
 
 ## Test functions
-```{r}
+```{r, eval=FALSE}
 info_04A <- read_rds("data/temp/return_info_04A.rds")
 
 set.seed(12182024)
@@ -457,7 +460,7 @@ set.seed(12182024)
 sample <- info_04A %>% 
   filter(ret_type == "990" |
            ret_type == "990PF") %>% 
-  slice_sample(n = 100, replace = FALSE)
+  slice_sample(n = 500, replace = FALSE)
 
 
 pc_which <- which(sample$ret_type == "990")
@@ -478,7 +481,7 @@ df_pf <- furrr::future_map(sample$file_loc[pf_which],
 
 df_pc <- bind_rows(df_pc)
 
-df_pf <- bind_rows(df_pf)
+df_pf <- bind_rows(df_pf)  
 
 ## looks ready . 
 
