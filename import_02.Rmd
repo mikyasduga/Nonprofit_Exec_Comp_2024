@@ -1,0 +1,433 @@
+---
+title: "Make data frames from xml documents"
+author: "Mikyas Duga"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE,
+                      message = FALSE)
+
+
+library(dplyr)
+library(purrr)
+library(readr)
+library(xml2)
+library(stringr)
+library(tidyr)
+
+source("my_functions.R")
+
+wd <- "C:/Users/mikyas.duga/OneDrive - BoardSource/IRS data/TY2022"
+
+```
+
+## Use working functions to make data frames from xml files 
+
+```{r}
+
+## 01A
+
+info_01A <- read_rds("data/temp/return_info_01_A.rds")
+
+
+pc_which_01A <- which(info_01A$ret_type == "990")
+
+pf_which_01A <- which(info_01A$ret_type == "990PF")
+
+
+library(future)
+
+plan(multisession, workers = 4)
+
+df_pc_01A <- furrr::future_map(info_01A$file_loc[pc_which_01A],
+                               ext_ind_comp, 
+                               .progress = TRUE)
+
+
+df_pf_01A <- furrr::future_map(info_01A$file_loc[pf_which_01A], 
+                           pf_ext_ind_comp, 
+                           .progress = TRUE)
+
+
+df_pc_01A <- bind_rows(df_pc_01A)
+
+df_pf_01A <- bind_rows(df_pf_01A)  
+
+
+
+df_01A <- bind_rows(df_pc_01A, 
+                    df_pf_01A)
+
+saveRDS(df_01A, 
+        file = "data/temp/df_01A.rds")
+
+rm(info_01A, df_01A, pc_which_01A, pf_which_01A, df_pc_01A, df_pf_01A)
+
+
+## 02A
+
+info_02A <- read_rds("data/temp/return_info_02A.rds")
+
+
+pc_which_02A <- which(info_02A$ret_type == "990")
+
+pf_which_02A <- which(info_02A$ret_type == "990PF")
+
+
+
+df_pc_02A <- furrr::future_map(info_02A$file_loc[pc_which_02A],
+                               ext_ind_comp, 
+                               .progress = TRUE)
+
+
+df_pf_02A <- furrr::future_map(info_02A$file_loc[pf_which_02A], 
+                           pf_ext_ind_comp, 
+                           .progress = TRUE)
+
+
+df_pc_02A <- bind_rows(df_pc_02A)
+
+df_pf_02A <- bind_rows(df_pf_02A)  
+
+
+
+df_02A <- bind_rows(df_pc_02A, 
+                    df_pf_02A)
+
+saveRDS(df_02A, 
+        file = "data/temp/df_02A.rds")
+
+rm(info_02A, df_02A, pc_which_02A, pf_which_02A, df_pc_02A, df_pf_02A)
+
+```
+
+```{r}
+## 03A
+
+info_03A <- read_rds("data/temp/return_info_03A.rds")
+
+
+pc_which_03A <- which(info_03A$ret_type == "990")
+
+pf_which_03A <- which(info_03A$ret_type == "990PF")
+
+
+
+df_pc_03A <- furrr::future_map(info_03A$file_loc[pc_which_03A],
+                               ext_ind_comp, 
+                               .progress = TRUE)
+
+
+df_pf_03A <- furrr::future_map(info_03A$file_loc[pf_which_03A], 
+                           pf_ext_ind_comp, 
+                           .progress = TRUE)
+
+
+df_pc_03A <- bind_rows(df_pc_03A)
+
+df_pf_03A <- bind_rows(df_pf_03A)  
+
+
+
+df_03A <- bind_rows(df_pc_03A, 
+                    df_pf_03A)
+
+saveRDS(df_03A, 
+        file = "data/temp/df_03A.rds")
+
+rm(info_03A, df_03A, pc_which_03A, pf_which_03A, df_pc_03A, df_pf_03A)
+
+
+## 04 A
+
+info_04A <- read_rds("data/temp/return_info_04A.rds")
+
+
+pc_which_04A <- which(info_04A$ret_type == "990")
+
+pf_which_04A <- which(info_04A$ret_type == "990PF")
+
+
+df_pc_04A <- furrr::future_map(info_04A$file_loc[pc_which_04A],
+                               ext_ind_comp, 
+                               .progress = TRUE)
+
+
+df_pf_04A <- furrr::future_map(info_04A$file_loc[pf_which_04A], 
+                           pf_ext_ind_comp, 
+                           .progress = TRUE)
+
+
+df_pc_04A <- bind_rows(df_pc_04A)
+
+df_pf_04A <- bind_rows(df_pf_04A)  
+
+
+
+df_04A <- bind_rows(df_pc_04A, 
+                    df_pf_04A)
+
+saveRDS(df_04A, 
+        file = "data/temp/df_04A.rds")
+
+rm(info_04A, df_04A, pc_which_04A, pf_which_04A, df_pc_04A, df_pf_04A)
+
+
+## 05A
+
+info_05A <- read_rds("data/temp/return_info_05A.rds")
+
+
+pc_which_05A <- which(info_05A$ret_type == "990")
+
+pf_which_05A <- which(info_05A$ret_type == "990PF")
+
+
+df_pc_05A <- furrr::future_map(info_05A$file_loc[pc_which_05A],
+                               ext_ind_comp, 
+                               .progress = TRUE)
+
+
+df_pf_05A <- furrr::future_map(info_05A$file_loc[pf_which_05A], 
+                           pf_ext_ind_comp, 
+                           .progress = TRUE)
+
+
+df_pc_05A <- bind_rows(df_pc_05A)
+
+df_pf_05A <- bind_rows(df_pf_05A)  
+
+
+
+df_05A <- bind_rows(df_pc_05A, 
+                    df_pf_05A)
+
+saveRDS(df_05A, 
+        file = "data/temp/df_05A.rds")
+
+rm(info_05A, df_05A, pc_which_05A, pf_which_05A, df_pc_05A, df_pf_05A)
+
+
+```
+
+```{r}
+
+## 05B
+
+info_05B <- read_rds("data/temp/return_info_05B.rds")
+
+
+pc_which_05B <- which(info_05B$ret_type == "990")
+
+pf_which_05B <- which(info_05B$ret_type == "990PF")
+
+
+df_pc_05B <- furrr::future_map(info_05B$file_loc[pc_which_05B],
+                               ext_ind_comp, 
+                               .progress = TRUE)
+
+
+df_pf_05B <- furrr::future_map(info_05B$file_loc[pf_which_05B], 
+                           pf_ext_ind_comp, 
+                           .progress = TRUE)
+
+
+df_pc_05B <- bind_rows(df_pc_05B)
+
+df_pf_05B <- bind_rows(df_pf_05B)  
+
+
+
+df_05B <- bind_rows(df_pc_05B, 
+                    df_pf_05B)
+
+saveRDS(df_05B, 
+        file = "data/temp/df_05B.rds")
+
+rm(info_05B, df_05B, pc_which_05B, pf_which_05B, df_pc_05B, df_pf_05B)
+
+## 06A
+
+info_06A <- read_rds("data/temp/return_info_06A.rds")
+
+
+pc_which_06A <- which(info_06A$ret_type == "990")
+
+pf_which_06A <- which(info_06A$ret_type == "990PF")
+
+
+df_pc_06A <- furrr::future_map(info_06A$file_loc[pc_which_06A],
+                               ext_ind_comp, 
+                               .progress = TRUE)
+
+
+df_pf_06A <- furrr::future_map(info_06A$file_loc[pf_which_06A], 
+                           pf_ext_ind_comp, 
+                           .progress = TRUE)
+
+
+df_pc_06A <- bind_rows(df_pc_06A)
+
+df_pf_06A <- bind_rows(df_pf_06A)  
+
+
+
+df_06A <- bind_rows(df_pc_06A, 
+                    df_pf_06A)
+
+saveRDS(df_06A, 
+        file = "data/temp/df_06A.rds")
+
+rm(info_06A, df_06A, pc_which_06A, pf_which_06A, df_pc_06A, df_pf_06A)
+
+
+## 07 A
+
+info_07A <- read_rds("data/temp/return_info_07A.rds")
+
+
+pc_which_07A <- which(info_07A$ret_type == "990")
+
+pf_which_07A <- which(info_07A$ret_type == "990PF")
+
+
+df_pc_07A <- furrr::future_map(info_07A$file_loc[pc_which_07A],
+                               ext_ind_comp, 
+                               .progress = TRUE)
+
+
+df_pf_07A <- furrr::future_map(info_07A$file_loc[pf_which_07A], 
+                           pf_ext_ind_comp, 
+                           .progress = TRUE)
+
+
+df_pc_07A <- bind_rows(df_pc_07A)
+
+df_pf_07A <- bind_rows(df_pf_07A)  
+
+
+
+df_07A <- bind_rows(df_pc_07A, 
+                    df_pf_07A)
+
+saveRDS(df_07A, 
+        file = "data/temp/df_07A.rds")
+
+rm(info_07A, df_07A, pc_which_07A, pf_which_07A, df_pc_07A, df_pf_07A)
+
+
+```
+
+```{r}
+## 08A
+
+info_08A <- read_rds("data/temp/return_info_08A.rds")
+
+
+pc_which_08A <- which(info_08A$ret_type == "990")
+
+pf_which_08A <- which(info_08A$ret_type == "990PF")
+
+
+df_pc_08A <- furrr::future_map(info_08A$file_loc[pc_which_08A],
+                               ext_ind_comp, 
+                               .progress = TRUE)
+
+
+df_pf_08A <- furrr::future_map(info_08A$file_loc[pf_which_08A], 
+                           pf_ext_ind_comp, 
+                           .progress = TRUE)
+
+
+df_pc_08A <- bind_rows(df_pc_08A)
+
+df_pf_08A <- bind_rows(df_pf_08A)  
+
+
+
+df_08A <- bind_rows(df_pc_08A, 
+                    df_pf_08A)
+
+saveRDS(df_08A, 
+        file = "data/temp/df_08A.rds")
+
+rm(info_08A, df_08A, pc_which_08A, pf_which_08A, df_pc_08A, df_pf_08A)
+
+
+
+## 09A
+
+info_09A <- read_rds("data/temp/return_info_09A.rds")
+
+
+pc_which_09A <- which(info_09A$ret_type == "990")
+
+pf_which_09A <- which(info_09A$ret_type == "990PF")
+
+
+df_pc_09A <- furrr::future_map(info_09A$file_loc[pc_which_09A],
+                               ext_ind_comp, 
+                               .progress = TRUE)
+
+
+df_pf_09A <- furrr::future_map(info_09A$file_loc[pf_which_09A], 
+                           pf_ext_ind_comp, 
+                           .progress = TRUE)
+
+
+df_pc_09A <- bind_rows(df_pc_09A)
+
+df_pf_09A <- bind_rows(df_pf_09A)  
+
+
+
+df_09A <- bind_rows(df_pc_09A, 
+                    df_pf_09A)
+
+saveRDS(df_09A, 
+        file = "data/temp/df_09A.rds")
+
+rm(info_09A, df_09A, pc_which_09A, pf_which_09A, df_pc_09A, df_pf_09A)
+
+
+##****** 10A Not run yet. 
+
+
+## 05B
+
+info_10A <- read_rds("data/temp/return_info_10A.rds")
+
+
+pc_which_10A <- which(info_10A$ret_type == "990")
+
+pf_which_10A <- which(info_10A$ret_type == "990PF")
+
+
+df_pc_10A <- furrr::future_map(info_10A$file_loc[pc_which_10A],
+                               ext_ind_comp, 
+                               .progress = TRUE)
+
+
+df_pf_10A <- furrr::future_map(info_10A$file_loc[pf_which_10A], 
+                           pf_ext_ind_comp, 
+                           .progress = TRUE)
+
+
+df_pc_10A <- bind_rows(df_pc_10A)
+
+df_pf_10A <- bind_rows(df_pf_10A)  
+
+
+
+df_10A <- bind_rows(df_pc_10A, 
+                    df_pf_10A)
+
+saveRDS(df_10A, 
+        file = "data/temp/df_10A.rds")
+
+rm(info_10A, df_10A, pc_which_10A, pf_which_10A, df_pc_10A, df_pf_10A)
+
+```
+
