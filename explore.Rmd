@@ -1,0 +1,191 @@
+---
+title: "Explore compensation data"
+author: "Mikyas Duga"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, 
+                      message = FALSE)
+
+
+library(duckdb)
+library(dplyr)
+
+```
+
+
+```{r}
+## some are compensated at reporting organization and also a related organization(s). 
+
+df_comp <- tbl(
+  dbConnect(duckdb()), 
+  "read_parquet('data/part-0.parquet', hive_partitioning = true)"
+) %>% 
+  mutate(avg_hrs = as.numeric(avg_hrs), 
+         rep_comp = as.numeric(rep_comp), 
+         rep_comp_rltd = as.numeric(rep_comp_rltd)) %>% 
+  filter(avg_hrs > 0 &  ## select those who have worked more than 0 hrs
+           rep_comp > 0) %>%  ## paid at the reporting organization  
+  collect()
+
+
+
+upper_squish <- function(z){
+  
+  z <- toupper(str_squish(z))
+}
+
+
+df_comp2 <- df_comp %>% 
+  mutate(Org_name = toupper(Org_name),
+         org_type = if_else(Return_type == "990", "PC", "PF"),
+         Tax_yr = as.numeric(Tax_yr), 
+         Tax_period = lubridate::date(Tax_yr_end) - 
+           lubridate::date(Tax_yr_begin), 
+         comb_501c = case_when(
+           Organization501c3Ind == "X" | ind_501c3 == 'X' ~ '501c3', 
+           ind_501c == 'X' ~ paste0('501c', type_501c), 
+           TRUE ~ NA 
+         ), 
+         zip_code = if_else(str_length(zip_code) == 9, 
+                            paste(substr(zip_code, 1, 5),
+                                  substr(zip_code, 6, 9),
+                                  sep = "-"), 
+                            zip_code), 
+         GroupReturnForAffiliatesInd = if_else((GroupReturnForAffiliatesInd == 'false'), 
+                                              '0', GroupReturnForAffiliatesInd), 
+         GroupReturnForAffiliatesInd = if_else((GroupReturnForAffiliatesInd == 'true'), 
+                                               '1', GroupReturnForAffiliatesInd),
+         FormationYr = as.numeric(FormationYr)) %>% 
+  mutate(across(c("CY_expenses", "assets_eoy", "total_employee_cnt", 
+              "avg_hrs_rltd", "other_comp", "ben_program_amt", 
+              "other_allwnc_amt"), as.numeric)) %>% 
+  mutate(across(where(is.character), upper_squish)) %>% 
+  select(-c(5:9, 18, 19, 32)) %>%  ## drop extraneous variables. not helpful for analysis. 
+  filter(!is.na(names))  ## drop rows with no names
+
+
+# df_comp2 <- df_comp2 %>% 
+#   mutate(flag_dup = duplicated(.))
+# 
+# 
+# dupes <- df_comp2 %>% 
+#    filter(flag_dup == TRUE)  ## there are some duplicates and some times errors. 
+
+df_comp2 <- df_comp2 %>%
+  mutate(id = paste(EIN, names, sep = "-")) %>% 
+  group_by(id) %>% 
+  arrange(avg_hrs) %>% 
+  distinct() %>% 
+  ungroup()
+
+
+# df_comp2 <- df_comp2 %>% 
+#   mutate(flag_dup2 = duplicated(.))
+
+# 
+# dupes2 <- df_comp2 %>%
+#    filter(flag_dup2 == TRUE)  ## no duplicates
+
+
+
+```
+
+
+```{r}
+
+## clean up titles. borrowed from other project. 
+
+brd_mem_titles <- c("BOARD MEMBER", "TREASURER", "SECRETARY", "BOARD",
+                   "SECRETARY/TREASURER", "BOARD CHAIR", "VICE CHAIR",
+                   "CHAIRMAN", "CHAIRPERSON", "BOARD TREASURER",
+                   "BOARD SECRETARY", "MEMBER", "RECORDING SE", 
+                   "RECORDING SECRETARY", "SECRETARY/TR", "SECRETARY TREASURER", 
+                   "CHAIR", "SEC/TREAS", "VICE CHAIRMA"
+                   )
+
+ED_titles <- c("CEO", "CHIEF EXECUTIVE OFFICER", 
+               "EXEC DI", "EXECUTIVE DI", "EXEC. DIR")
+
+
+
+pres_and_ed <- c("PRESIDENT &", "PRESIDENT AND", "PRESIDENT/", 
+                 "PRESIDENT, EXEC")
+
+
+
+
+df_comp2 <- df_comp2 %>%
+  mutate(title = if_else(title  %in% brd_mem_titles, "BOARD MEMBER", title)) %>%
+  # mutate(title = if_else(title  == "DIRECTOR", "EXECUTIVE DIRECTOR", title)) %>%
+  mutate(title = str_replace_all(title, "-", " ")) %>%
+  mutate(title = str_replace_all(title, "VP", "VICE PRESIDENT")) %>%
+  mutate(title = if_else(title  == "1ST VICE PRE" |
+                         title ==  "1ST VP", "1ST VICE PRESIDENT", title)) %>%
+  mutate(title = if_else(str_starts(title, "2ND VICE PRE"), "2ND VICE PRESIDENT", title)) %>%
+  mutate(title = if_else(str_starts(title, "ADMINIST"), "ADMINISTRATOR", title)) %>%
+  mutate(title = if_else(title  %in% ed_titles, "EXECUTIVE DIRECTOR", title)) %>%
+  mutate(title = if_else(title  == "CFO", "CHIEF FINANCIAL OFFICER", title)) %>%
+  mutate(title = if_else(title  == "COO", "CHIEF OPERATING OFFICER", title)) %>%
+  mutate(title = if_else(str_starts(title, "EXEC BO"), "EXECUTIVE BOARD MEMBER", title)) %>%
+  mutate(title = if_else(title %in% pres_and_ed, "PRESIDENT & CEO", title)) %>%
+  mutate(title = if_else(str_starts(title, "VICE PRESIDE"), "VICE PRESIDENT", title)) %>%
+  mutate(title = if_else(str_starts(title, "EXECUTIVE BO"), "EXECUTIVE BOARD MEMBER", title)) %>%
+  mutate(title = if_else(str_starts(title, "ASSISTANT DI"), "ASSISTANT DIRECTOR", title)) %>%
+  mutate(title = if_else(str_starts(title, "ASST DIRE"), "ASSISTANT DIRECTOR", title)) %>%
+  mutate(title = if_else(str_starts(title, "BOARD MAN"), "BOARD MANAGER", title)) %>%
+  mutate(title = if_else(str_starts(title, "CAO"), "CHIEF ADMINISTRATIVE OFFICER", title)) %>%
+  mutate(title = if_else(str_starts(title, "BUSINESS MAN"), "BUSINESS MANAGER", title)) %>%
+  mutate(title = if_else(str_starts(title, "CIO"), "CHIEF INFORMATION OFFICER", title)) %>%
+  mutate(title = if_else(str_starts(title, "CMO"), "CHIEF MEDICAL OFFICER", title)) %>%
+  mutate(title = str_remove_all(title, "CO ")) %>%
+  mutate(title = if_else(title == "DEPUTY EXECUTIVE DIRECTOR", "DEPUTY DIRECTOR", title)) %>%
+  mutate(title = if_else(str_starts(title, "EXECUTIVE COMM"), "EXECUTIVE COMMITTEE MEMBER", title)) %>%
+  mutate(title = if_else(str_starts(title, "FINANCE DIRE"), "FINANCE DIRECTOR", title)) %>%
+  mutate(title = if_else(str_starts(title, "FINANCE OFF"), "FINANCE OFFICER", title)) %>%
+  mutate(title = if_else(str_starts(title, "FINANCIAL SE"), "FINANCIAL SECRETARY", title)) %>%
+  mutate(title = if_else(str_starts(title, "HEAD OF SCHO"), "HEAD OF SCHOOL", title)) %>%
+  mutate(title = if_else(str_starts(title, "MEDICAL DIRE"), "MEDICAL DIRECTOR", title)) %>%
+  mutate(title = str_replace_all(title, "PAST", "FORMER")) %>%
+  mutate(title = if_else(str_starts(title, "PROGRAM DIRE"), "PROGRAM DIRECTOR", title)) %>%
+  mutate(title = if_else(str_starts(title, "RN"), "REGISTERED NURSE", title)) %>%
+  mutate(title = if_else(str_starts(title, "SUPERINTENDE"), "SUPERINTENDENT", title)) %>%
+  mutate(title = if_else(str_starts(title, "SVICE P"), "SENIOR VICE PRESIDENT", title)) %>%
+  mutate(title = if_else(str_starts(title, "VICE PRES"), "VICE PRESIDENT", title)) %>%
+  mutate(title = if_else(str_starts(title, "ARTISTIC DIR"), "ARTISTIC DIRECTOR", title)) %>%
+  mutate(title = if_else(str_starts(title, "CFO/TREAS"), "CHIEF FINANCIAL OFFICER", title)) %>%
+  mutate(title = if_else(str_starts(title, "CHIEF OPERATING OFF"), "CHIEF OPERATIONS OFFICER", title)) %>%
+  mutate(title = if_else(title == "DIRECTOR OF", "DIRECTOR", title)) %>%
+  mutate(title = if_else(str_starts(title, "EX. BOARD"), "EXECUTIVE BOARD MEMBER", title)) %>%
+  mutate(title = if_else(title == "FORMEROR", "PASTOR", title)) %>% #fix error from earlier step
+  mutate(title = if_else(str_starts(title, "HR DIRECTOR"), "DIRECTOR OF HUMAN RESOURCES", title)) %>%
+  mutate(title = str_replace_all(title, "PRIOR", "FORMER")) %>%
+  mutate(title = if_else(title == "SEE SCHEDULE O", "OTHER", title)) %>%
+  mutate(title = if_else(is.na(title), "OTHER", title))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
