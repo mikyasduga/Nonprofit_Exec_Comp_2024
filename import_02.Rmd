@@ -431,3 +431,42 @@ rm(info_10A, df_10A, pc_which_10A, pf_which_10A, df_pc_10A, df_pf_10A)
 
 ```
 
+
+## big xml files previously unprocessed and combine files 
+```{r}
+# big_xml <- read_rds("data/temp/xml_too_big.rds") %>% 
+#   rename(filename = 1) %>% 
+#   slice(-1)
+
+## the first file is corrupt. others are fine. dropped first file. 
+## all files are corrupt or take too long to process. 
+
+library(data.table)
+library(dtplyr)
+
+
+df_comp <- as.data.table(
+  bind_rows(read_rds("data/temp/df_01A.rds"),
+            read_rds("data/temp/df_02A.rds"), 
+            read_rds("data/temp/df_03A.rds"), 
+            read_rds("data/temp/df_04A.rds"), 
+            read_rds("data/temp/df_05A.rds"), 
+            read_rds("data/temp/df_05B.rds"), 
+            read_rds("data/temp/df_06A.rds"), 
+            read_rds("data/temp/df_07A.rds"),
+            read_rds("data/temp/df_08A.rds"), 
+            read_rds("data/temp/df_09A.rds"), 
+            read_rds("data/temp/df_10A.rds")))  ## just above 3M rows. 
+
+df_comp <- as.data.frame(df_comp)
+
+
+arrow::write_dataset(df_comp, 
+                     path = "data", 
+                     format = "parquet")
+
+
+
+
+```
+
