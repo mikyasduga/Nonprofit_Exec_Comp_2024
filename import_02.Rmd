@@ -456,14 +456,18 @@ df_comp <- as.data.table(
             read_rds("data/temp/df_07A.rds"),
             read_rds("data/temp/df_08A.rds"), 
             read_rds("data/temp/df_09A.rds"), 
-            read_rds("data/temp/df_10A.rds")))  ## just above 3M rows. 
+            read_rds("data/temp/df_10A.rds")))  ## 3.03M rows. 
 
-df_comp <- as.data.frame(df_comp)
+saveRDS(df_comp, "data/df_comp.rds")
 
 
-arrow::write_dataset(df_comp, 
-                     path = "data", 
-                     format = "parquet")
+
+# df_comp <- as.data.frame(df_comp)
+# 
+# 
+# arrow::write_dataset(df_comp, 
+#                      path = "data", 
+#                      format = "parquet")
 
 
 
