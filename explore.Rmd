@@ -27,8 +27,8 @@ library(stringr)
 df_comp <- read_rds("data/df_comp.rds") %>% 
   fmutate(across(c("avg_hrs", "rep_comp", "rep_comp_rltd"), 
                  as.numeric)) %>% 
-  fsubset(avg_hrs > 0 &  ## select those who have worked more than 0 hrs
-           rep_comp > 0)  ## paid at the reporting organization  
+  fsubset(avg_hrs >= 5 & ## select those who have worked at least 5 hrs per week and
+           rep_comp >=5000)  ## paid more than $5000/year by the reporting organization  
 
 
 upper_squish <- function(z){
@@ -103,7 +103,7 @@ brd_mem_titles <- c("BOARD MEMBER", "TREASURER", "SECRETARY", "BOARD",
                    "CHAIRMAN", "CHAIRPERSON", "BOARD TREASURER",
                    "BOARD SECRETARY", "MEMBER", "RECORDING SE", 
                    "RECORDING SECRETARY", "SECRETARY/TR", "SECRETARY TREASURER", 
-                   "CHAIR", "SEC/TREAS", "VICE CHAIRMA"
+                   "CHAIR", "SEC/TREAS", "VICE CHAIRMA", "SECRETARY AND TREASURER"
                    )
 
 ed_titles <- c("CEO", "CHIEF EXECUTIVE OFFICER", 
@@ -121,10 +121,20 @@ pres_and_ed <- c("PRESIDENT &", "PRESIDENT AND", "PRESIDENT/",
 
 df_comp2 <- df_comp2 %>%
   frename(title = titles) %>% 
-  fmutate(title = if_else(title  %in% brd_mem_titles, "BOARD MEMBER", title),
-  # fmutate(title = if_else(title  == "DIRECTOR", "EXECUTIVE DIRECTOR", title),
+  fmutate(
+  title = str_squish(title),
   title = str_replace_all(title, "-", " "),
   title = str_replace_all(title, "VP", "VICE PRESIDENT"),
+  title = str_replace_all(title, "SR ", "SENIOR " ),
+  title = if_else(title == "RN", "REGISTERED NURSE", title), 
+  title = str_replace_all(title, "IT ", "INFROMATION TECHNOLOGY "),
+  title = str_replace_all(title, "HR ", "HUMAN RESOURCES "),
+  title = str_replace_all(title, "CEO", "EXECUTIVE DIRECTOR"),
+  title = str_remove_all(title, "CO "),  ## remove co from title of co-leaders
+  
+  # title = if_else(title  %in% brd_mem_titles, "BOARD MEMBER", title),
+  # fmutate(title = if_else(title  == "DIRECTOR", "EXECUTIVE DIRECTOR", title),
+
   title = if_else(title  == "1ST VICE PRE" |
                          title ==  "1ST VP", "1ST VICE PRESIDENT", title),
   title = if_else(str_starts(title, "2ND VICE PRE"), "2ND VICE PRESIDENT", title),
@@ -143,7 +153,7 @@ df_comp2 <- df_comp2 %>%
   title = if_else(str_starts(title, "BUSINESS MAN"), "BUSINESS MANAGER", title),
   title = if_else(str_starts(title, "CIO"), "CHIEF INFORMATION OFFICER", title),
   title = if_else(str_starts(title, "CMO"), "CHIEF MEDICAL OFFICER", title),
-  title = str_remove_all(title, "CO "),
+
   title = if_else(str_starts(title, "EXECUTIVE COMM"), "EXECUTIVE COMMITTEE MEMBER", title),
   title = if_else(str_starts(title, "FINANCE DIRE"), "FINANCE DIRECTOR", title),
   title = if_else(str_starts(title, "FINANCE OFF"), "FINANCE OFFICER", title),
@@ -152,7 +162,6 @@ df_comp2 <- df_comp2 %>%
   title = if_else(str_starts(title, "MEDICAL DIRE"), "MEDICAL DIRECTOR", title),
   title = str_replace_all(title, "PAST", "FORMER"),
   title = if_else(str_starts(title, "PROGRAM DIRE"), "PROGRAM DIRECTOR", title),
-  title = if_else(str_starts(title, "RN"), "REGISTERED NURSE", title),
   title = if_else(str_starts(title, "SUPERINTENDE"), "SUPERINTENDENT", title),
   title = if_else(str_starts(title, "SVICE P"), "SENIOR VICE PRESIDENT", title),
   title = if_else(str_starts(title, "VICE PRES"), "VICE PRESIDENT", title),
@@ -164,23 +173,25 @@ df_comp2 <- df_comp2 %>%
   title = if_else(title == "FORMEROR", "PASTOR", title), #fix error from earlier step
   title = if_else(str_starts(title, "HR DIRECTOR"), "DIRECTOR OF HUMAN RESOURCES", title),
   title = str_replace_all(title, "PRIOR", "FORMER"),
-  title = if_else(title == "SEE SCHEDULE O", NA, title))
+  title = if_else(str_detect(title, "SEE SCHEDULE O"), NA, title))
 
 
 
 
 
-DT::datatable(df_comp2 %>% 
-                fselect(title) %>% 
-                fcount(title, sort = TRUE))
+# DT::datatable(df_comp2 %>% 
+#                 fselect(title) %>% 
+#                 fcount(title, sort = TRUE))
 
 
 
 
 df_comp3 <- df_comp2 %>% 
   fsubset(!is.na(title)) %>% 
-  fmutate(title = str_replace_all(title, "///", " AND "),
-          title = str_remove_all(title, "[//.,]"),
+  fmutate(title = str_squish(title),
+          title = str_replace_all(title, "///", " AND "),
+          title = str_remove_all(title, "[//.]"),
+          title = str_replace_all(title, ",", "AND"),
          title = str_replace_all(title, "DIRECTOR OF", "DIRECTOR"), 
          # title = str_replace_all(title, "DIR.", "DIRECTOR"), 
          title = str_replace_all(title, "&", "AND"), 
@@ -208,7 +219,11 @@ df_comp3 <- df_comp2 %>%
           title = if_else(title == "CBO", "CHIEF BUSINESS OFFICER", title),
           title = if_else(title == "CNO", "CHIEF NURSING OFFICER", title),
           title = if_else((title == "SECRETARY TREASURER" |
-                            title == "SECRETARY TR"), "SECRETARY AND TREASURER", title), 
+                            title == "SECRETARY TR" |
+                             title == "SECRETARYTR" |
+                             title == "TREASURERSECRETARY" |
+                             title == "SEC TREASURER" |
+                             title == "SECRETARYTREASURER"), "SECRETARY AND TREASURER", title), 
           title = if_else(title == "GENERAL MANA", "GENERAL MANAGER", title), 
           title = if_else((title == "PRESIDENT CEO" |
                             title == "CEO AND PRESIDENT"), "PRESIDENT AND CEO", title), 
@@ -220,8 +235,25 @@ df_comp3 <- df_comp2 %>%
                           title), 
           title = if_else(str_detect(title, "CHIEF EXECUTIVE OFFICER") &
                             str_detect(title, "PRESIDENT"), "PRESIDENT AND CEO", 
-                          title) 
-          ) %>% 
+                          title) , 
+          title = str_replace_all(title, "SARGENT", "SERGEANT"), ## fix spelling error
+          title = str_replace_all(title, "SERGEANT ARMS", "SERGEANT AT ARMS"), 
+          title = str_replace_all(title, "PRESIDENTDIRECTOR", "PRESIDENT AND DIRECTOR"), 
+          title = if_else((title == "PRESIDENTEXECUTIVE DIRECTOR" |
+                            title == "CEOPRESIDENT" |
+                             title == "PRESIDENT AND EXECUTIVE DIRECTOR" |
+                             title == "PRESIDENTAND CEO"), "PRESIDENT AND CEO", title), 
+          title = if_else((title == "CEOEXECUTIVEDIRECTOR" |
+                                    title == "CEO" |
+                             title == "EXECUTIVE DIRECTOREXECUTIVE DIRECTOR" |
+                             title == "EXECUTIVE DIRE"), "EXECUTIVE DIRECTOR", title),
+           title = str_replace_all(title, "BOARD DIRECTORS", "BOARD MEMBER"),
+          title = if_else(title == "DEPUTY DIREC", "DEPUTY DIRECTOR", title), 
+          title = if_else(title == "COOCFO" |
+                            title == "CFOCOO" |
+                            title == "COO AND CFO", "CFO AND COO", title),
+          
+          title = str_remove_all(title, "OF ")) %>% 
   fmutate(title = str_squish(title)) %>% 
   fsubset(title != "EMPLOYEE" &
             title != "KEY EMPLOYEE" &
@@ -233,12 +265,6 @@ df_comp3 <- df_comp2 %>%
             str_detect(title, "PART YEAR") ==  FALSE) ##EXCLUDE THOSE WHO SERVED ONLY FOR PART OF THE YEAR  
 
          
-  
-
-
-
-
-
 temp_tbl <- df_comp3 %>% 
                 fselect(title) %>% 
                 fgroup_by(title) %>%
@@ -252,6 +278,23 @@ DT::datatable(temp_tbl)
                 
 
 
+## sergeant at arms misspelled at times (fix sargent and sargent arms)
+## presidentdirector to president/Director 
+## ceopresident to president and ceo
+## presidentexecutive director to president and ceo
+## ceoexecutivedirector to executive director
+## of finance director to finance director
+## CEO to exec director
+## board directors to BM
+## deputy direc to deputy director 
+## treasurersecretary and sec treasurer to secretary and treasurer or equivalent. ## check!!
+## Coocfo, cfocoo, coo and cfo to CFO and coo
+## SR to senior
+
+
+
+## information technology director to IT director 
+## head school to head of school & chief staff to chief of staff
 
 
 
