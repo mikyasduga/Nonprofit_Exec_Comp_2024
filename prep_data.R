@@ -54,6 +54,24 @@ final_comp <- final_comp %>%
 ## AS CLEAN AS IT GETS. 
 
 
+## to title with exceptions
+to_title_we <- function(x){
+  
+  x <- str_to_title(x)
+  
+  x <- str_replace_all(x, c(" Of " = " of ", 
+                            " And " = " and ", 
+                            " Ceo" =  " CEO", 
+                            " Md" = " MD", 
+                            " Mba" = " MBA", 
+                            " Phd" = " PhD")
+  )
+  
+  
+  
+              
+}
+
 common_roles <- final_comp %>% 
   fselect(title) %>% 
   fgroup_by(title) %>% 
@@ -64,33 +82,8 @@ common_roles <- final_comp %>%
 
 
 
-app_df <- final_comp %>% 
-  fsubset(title %in% common_roles$title)
-
-
-exc <- c("OF", "AND")
-
-## to title with exceptions
-to_title_we <- function(x){
-  
-  x <- str_to_title(x)
-  
-  x <- str_replace_all(x, c(" Of " = " of ", 
-                            " And " = " and ", 
-                            " Ceo" =  " CEO", 
-                            " Md" = " MD", 
-                            " Mba" = "MBA")
-  )
-  
-  
-  
-              
-}
-
-
-
-
-
+# app_df <- final_comp %>% 
+#   fsubset(title %in% common_roles$title)
 
 
 ntee <- read.table("data/ntee_cd.txt", sep = "-") %>% 
@@ -101,53 +94,38 @@ ntee <- read.table("data/ntee_cd.txt", sep = "-") %>%
 
 
 ## individuals with the highest compensation 
-final_comp %>% 
-  arrange(desc(rep_comp)) %>% 
-  fselect(names, title, rep_comp, org_name, org_type, comb_501c, ntee_cd, 
-           ein, state, tax_yr) %>% 
-  fsubset(org_type == "PF") %>% 
-  slice(1:100) %>%
-  mutate((across(where(is.character), to_title_we))) %>% 
-  fmutate(state = toupper(state),
-          org_type = toupper(org_type),
-          rep_comp = scales::dollar(rep_comp), 
-          org_type = if_else(org_type == "PC", "Public charity", 
-                             "Private foundation"), 
-          ntee_cd = substr(ntee_cd, 1,1)
-          ) %>%
-  left_join(ntee, by = "ntee_cd") %>% 
-  fselect(-ntee_cd) %>% 
-  frename(Name = names, 
-          Title = title, 
-          "Reported Compensation" = rep_comp, 
-          "organization" = org_name, 
-          "Org Type" = org_type, 
-          '501c classification' = comb_501c, 
-          'Mission area' = label, 
-          EIN = ein, 
-          State = state, 
-          'Tax year' = tax_yr
-          ) %>% 
-  DT::datatable()
+# final_comp %>% 
+#   arrange(desc(rep_comp)) %>% 
+#   fselect(names, title, rep_comp, org_name, org_type, comb_501c, ntee_cd, 
+#            ein, state, tax_yr) %>% 
+#   # fsubset(org_type == "PF") %>% ## filtering section
+#   slice(1:100) %>%
+#   mutate((across(where(is.character), to_title_we))) %>% 
+#   fmutate(state = toupper(state),
+#           org_type = toupper(org_type),
+#           rep_comp = scales::dollar(rep_comp), 
+#           org_type = if_else(org_type == "PC", "Public charity", 
+#                              "Private foundation"), 
+#           ntee_cd = substr(ntee_cd, 1,1)
+#           ) %>%
+#   left_join(ntee, by = "ntee_cd") %>% 
+#   fselect(-ntee_cd) %>% 
+#   frename(Name = names, 
+#           Title = title, 
+#           "Reported Compensation" = rep_comp, 
+#           "organization" = org_name, 
+#           "Org Type" = org_type, 
+#           '501c classification' = comb_501c, 
+#           'Mission area' = label, 
+#           EIN = ein, 
+#           State = state, 
+#           'Tax year' = tax_yr
+#           ) %>% 
+#   DT::datatable()
           
 
-create_asset_class <- function(x){
-
-
-x <- mutate(x = case_when(
-  x < 500000 ~ "<500K", 
-  between(x, 500000, 1999999) ~ " Between 500k and 2M", 
-  between(x, 2000000,4999999) ~ "Between 2M and 5M", 
-  between(x, 5000000, 19999999) ~ "Between 5M and 20M", 
-  x >= 20000000 ~ ">=20M", 
-  TRUE ~ NA
-))
-
-x
-}
-
-
 final_comp <- final_comp %>% 
+  fsubset(title %in% common_roles$title) %>% 
   fmutate(
   asset2 = cut(assets_eoy, breaks = c(0, 500000, 
                                       1999999, 4999999, 
@@ -158,23 +136,74 @@ final_comp <- final_comp %>%
                           "$5,000,000 to $19,999,999",
                           ">= $20,000,000"), 
                ordered_result = T
-               )) 
+               )) %>% 
+  mutate((across(where(is.character), to_title_we))) %>% 
+  fmutate(state = toupper(state),
+          org_type = toupper(org_type),
+          org_type = if_else(org_type == "PC", "Public charity", 
+                             "Private foundation"), 
+          ntee_cd = substr(ntee_cd, 1,1)
+  ) %>%
+  left_join(ntee, by = "ntee_cd") %>% 
+  fselect(-ntee_cd)
 
+
+common_roles <- common_roles%>%
+  fmutate(title = to_title_we(title))
 
 ## plots
 library(ggplot2)
+library(ggdist)
+library(showtext)
+library(forcats)
 
-final_comp %>% 
+font_add_google("Sen", "Sen")
+
+showtext_auto()
+
+
+set.seed(20250113) 
+
+
+q99 <- final_comp %>% 
+  fsubset(title == common_roles$title[1]) %>%
+  fsummarise(qx = quantile(rep_comp, probs = 0.99)) %>% 
+  as.double()
+
+# test <- 
+  final_comp %>% 
   fsubset(title == common_roles$title[1] &
-            !is.na(asset2)) %>%
-  fselect(asset2, rep_comp) %>% 
-  ggplot(aes(y = rep_comp))+
-  geom_density()
+            !is.na(asset2) &
+            rep_comp <= q99) %>%
+  fselect(asset2, rep_comp, org_name, label) %>% 
+  fmutate(med_comp = median(rep_comp)) %>% 
+  # slice_sample(n = 10000, replace = FALSE) %>% 
+  ggplot(aes(y = rep_comp, x = fct_rev(asset2)))+
+  stat_halfeye()+
+  stat_interval()+
+  stat_summary(geom = "point", fun = median, size =3) +
+  geom_hline(aes(yintercept = med_comp), lty = "dashed")+
+  # facet_wrap(~asset2, ncol = 1,
+  #            scales = "free_y")+
+  custom_style3()+
+  scale_y_continuous(labels = scales::dollar,
+                     name = NULL, 
+                     expand = c(0,0))+
+    scale_x_discrete(name = NULL, labels = function(i) custom_lbl_wrap(i,w=19))+
+  labs(title = "Compensation for position by organization asset size", 
+       caption = "Source: Internal Revenue Service 2024")+
+  coord_flip()
   
   
   
-
-
+final_comp %>% 
+  fsubset(title == common_roles$title[1]) %>% 
+  fsummarise(mean = mean(rep_comp, na.rm = T), 
+             median = median(rep_comp, na.rm = T), 
+             qx = quantile(rep_comp, probs = 0.99),
+             min = min(rep_comp), 
+             max = max(rep_comp))
+ 
 
 
 
