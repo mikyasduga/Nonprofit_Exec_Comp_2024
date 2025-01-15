@@ -170,8 +170,8 @@ q99 <- final_comp %>%
   fsummarise(qx = quantile(rep_comp, probs = 0.99)) %>% 
   as.double()
 
-# test <- 
-  final_comp %>% 
+test <- 
+final_comp %>% 
   fsubset(title == common_roles$title[1] &
             !is.na(asset2) &
             rep_comp <= q99) %>%
@@ -179,7 +179,7 @@ q99 <- final_comp %>%
   fmutate(med_comp = median(rep_comp)) %>% 
   # slice_sample(n = 10000, replace = FALSE) %>% 
   ggplot(aes(y = rep_comp, x = fct_rev(asset2)))+
-  stat_halfeye()+
+  stat_halfeye(alpha = 0.5)+
   stat_interval()+
   stat_summary(geom = "point", fun = median, size =3) +
   geom_hline(aes(yintercept = med_comp), lty = "dashed")+
@@ -190,12 +190,68 @@ q99 <- final_comp %>%
                      name = NULL, 
                      expand = c(0,0))+
     scale_x_discrete(name = NULL, labels = function(i) custom_lbl_wrap(i,w=19))+
+  scale_color_manual(values = wes_chevalier)+
   labs(title = "Compensation for position by organization asset size", 
        caption = "Source: Internal Revenue Service 2024")+
-  coord_flip()
+  coord_flip(clip = 'off')+
+  theme(panel.grid.major.y = element_line())
+ 
+
+set.seed(20250115)
+df_legend <- final_comp %>% 
+  fselect(rep_comp) %>% 
+  slice_sample(n=1000, replace = F) %>% 
+  fsubset(rep_comp<=400000)
+
+
+library(ggtext)
+p_legend <-
+  df_legend %>% 
+  ggplot(aes(y=rep_comp, x = 1)) +
+  stat_halfeye(fill_type = "segments", alpha = 0.5) +
+  stat_interval() +
+  stat_summary(geom = "point", fun = median, size =3) +
+  annotate(
+    "text",
+    x = c(0.8, 0.8, 0.8, 1.4, 1.75),
+    y = c(60000, 270000, 180000, 92000, 150000),
+    label = c("50 % of prices\nfall within this range", "95 % of prices", 
+              "80 % of prices", "Median", "Distribution of prices"),
+    family = "Sen", size = 3, vjust = 1
+  ) +
+   geom_curve(
+    data = data.frame(
+      x = c(0.8, 0.80, 0.80, 1.3, 1.7),
+      xend = c(0.95, 0.95, 0.95, 1.075, 1.7), 
+      y = c(60000, 270000, 180000, 92000, 87000),
+      yend = c(60000, 270000, 180000, 92000, 10000)),
+    aes(x = x, xend = xend, y = y, yend = yend),
+    stat = "unique", curvature = -0.2, size = 0.2, color = "black",
+    arrow = arrow(angle = 20, length = unit(2, "mm")), 
+    linewidth = 1.05
+  ) +
+  scale_color_manual(values = wes_chevalier) +
+  coord_flip(xlim = c(0.5, 1.85),
+             ylim = c(0, 380000), expand = TRUE) +
+  guides(color = "none") +
+  labs(title = "Legend") +
+  custom_style3()+
+  theme_void(base_family = "Sen")+ 
+  theme(plot.title = element_text(family = "Sen", size = 12,
+                                  hjust = 0.05),
+        plot.background = element_rect(color = "grey30",
+                                       size = 0.2))
   
   
+ 
+
+
+library(patchwork)
+test + inset_element(p_legend, l = 0.6, r = 1.0,
+                     t = 0.99, b = 0.7, clip = FALSE)
+ 
   
+
 final_comp %>% 
   fsubset(title == common_roles$title[1]) %>% 
   fsummarise(mean = mean(rep_comp, na.rm = T), 

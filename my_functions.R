@@ -541,10 +541,11 @@ custom_lbl_wrap <- function(x, w = 20){
 
 
 
+## color palettes from wes anderson package. 
 
+wes_chevalier <- c("#446455FF", "#FDD262FF", "#D3DDDCFF", "#C7B19CFF")
 
-
-
+wes_moonrise2 <- c("#798E87FF", "#C27D38FF", "#CCC591FF", "#29211FFF")
 
 
 
