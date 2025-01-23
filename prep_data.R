@@ -7,6 +7,7 @@ library(collapse)
 library(data.table)
 library(stringr)
 source("my_functions.R")
+source("prep_functions.R")
 
 final_comp <- fst::read_fst("data/final_comp.fst")
 
@@ -160,13 +161,7 @@ common_roles <- common_roles%>%
 library(ggplot2)
 library(ggdist)
 library(showtext)
-library(forcats)
 
-font_add_google("Sen", "Sen")
-
-showtext_auto()
-
-gdtools::register_gfont("Sen")
 
 
 ## add a value box to show the overall median value. 
@@ -271,20 +266,7 @@ plot_dist(1)
 #   left_join(df_rel, by = "state")
   
   
-us_geo <- tigris::states(class = "sf", cb = TRUE) %>% 
-       tigris::shift_geometry()
-  
 
-us_geo <- us_geo %>% 
-  rename(state = STUSPS) %>% 
-  left_join(make_df_rel(1), by = "state") %>% 
-  filter(state %in% c(state.abb, "DC", "PR")) %>% 
-  mutate(across(c("med_comp", "q25", "q75"), round))
-
-
- 
-  
-  
 # library(leaflet)
 # 
 # m <- leaflet(states) %>%
@@ -354,33 +336,6 @@ my_pal2 <- c("#DEF5E5FF", "#A0DFB9FF",
 
 
 
-library(ggiraph)
-gg <- ggplot(make_df_rel(1),
-             aes(fill = med_comp)) + 
-  geom_sf_interactive(aes(tooltip = paste0(NAME,"<br>",
-                                          "Median compensation: ", scales::dollar(med_comp), "<br>", 
-                                           "Half earn between: ", scales::dollar(q25), " & ",
-                                          scales::dollar(q75)),
-                          data_id = NAME), 
-                      size = 0.1) + 
-  scale_fill_gradientn(colors = my_pal2, labels = scales::label_dollar())+
-  labs(title = paste0("Median Compensation for ",
-                      common_roles$title[1], "s ", "by State"),
-       caption = "Note: This graph doesn't include the top 0.01% of earners.\nSource: Internal Revenue Service 2024",
-       fill = NULL) + 
-  custom_style3() +
-  theme(axis.text = element_blank(), 
-        legend.position = "top",
-        legend.justification = c("left", "top"),
-        legend.key.width = unit(4, "line")
-        ) 
-
-
-
-
-girafe(ggobj = gg) %>%
-  girafe_options(opts_hover(css = "fill:cyan;"), 
-                 opts_zoom(min = 0.5, max = 4))
 
 
 
